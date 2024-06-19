@@ -11,18 +11,19 @@ rws.timeout = 1000
 //What to do when a connection is opened
 rws.addEventListener("open", () => {
     console.log("[Client] Connection to WebSocket Server was opened.")
-    rws.send("Hello, this is a message from a client.")
-    rws.send(JSON.stringify({ //JSON RPC
-        method: "set-background-color",
+
+    //The messages we want to send to the server
+    rws.send(JSON.stringify({
+        method: "say",
         params: {
-            color: "blue"
+            text: "Hello World!"
         }
     }))
 })
 
 //What to do when we receive a message
 rws.addEventListener("message", (e) => {
-    console.log("[Client] Message received: " + e.data)
+    // console.log("[Client] Received message: " + e.data)
 
     //If the message received is JSON parseable, then handle it. Otherwise, report an error
     try {
@@ -35,7 +36,7 @@ rws.addEventListener("message", (e) => {
 
 //What to do when the server is closed
 rws.addEventListener("close", () => {
-    console.log("[Client] Connection closed.")
+    console.log("[Client] Connection closed. Reconnecting...")
 })
 
 //What to do when we get an error
