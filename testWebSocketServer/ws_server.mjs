@@ -1,10 +1,10 @@
-const express = require("express");
-const WebSocket = require("ws");
-const SocketServer = WebSocket.Server;
+import express from "express";
+import WebSocket, { WebSocketServer as SocketServer } from "ws";
 
 class ws_server {
     constructor(server_port, handlers) {
         this.server_port = server_port;
+        this.handlers = handlers;
         const server = express().listen(this.server_port);
         this.wss = new SocketServer({ server });
         console.log("[Server] Created a Web Socket server on port " + this.server_port + ".");
@@ -24,13 +24,12 @@ class ws_server {
 
             // What to do when a WS message is received
             ws.on("message", (message) => {
-                // console.log("[Server] Received message: %s", message);
-
                 // If the message received is JSON parseable, then handle it. Otherwise, report an error
                 try {
                     let m = JSON.parse(message);
                     this.handle_message(m);
                 } catch (err) {
+                    console.log(err)
                     console.log("[Server] Message is not parseable to JSON.");
                 }
 
@@ -46,9 +45,9 @@ class ws_server {
     }
 
     // Method to handle incoming messages
+    //Takes the method element of a JSON object and decides what to do with it
+    //Goes through the list of handlers to see if there is a method already defined for it
     handle_message(m) {
-        //Takes the method element of a JSON object and decides what to do with it
-        //Goes through the list of handlers to see if there is a method already defined for it
         if (m.method == undefined) {
             return;
         }
@@ -56,8 +55,8 @@ class ws_server {
         let method = m.method
 
         if (method) {
-            if (handlers[method]) {
-                let handler = handlers[method]
+            if (this.handlers[method]) {
+                let handler = this.handlers[method]
                 handler(m)
             } else {
                 console.log("[Server] No handler defined for method " + method + ".")
@@ -65,7 +64,7 @@ class ws_server {
         }
     }
 
-    // Broadcast a JSON object to all clients
+    // Broadcast a JSON objec (Converted to a string) to all clients
     broadcast_message(method, parameters) {
         let newMessage = JSON.stringify({
             method: method,
@@ -75,7 +74,7 @@ class ws_server {
         this.wss.clients.forEach(function each(client) {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(newMessage);
-                console.log("[Server] Message broadcast to clients.")
+                console.log("[Server] Message broadcast to clients: \n\t", newMessage)
             } else {
                 console.log("[Server] Client did not receive message broadcast. Client readyState = CLOSED.")
             }
@@ -83,51 +82,4 @@ class ws_server {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// TESTING THESE CLASSES
-
-//Handlers for handling specific messages
-let handlers = {
-    "set-background-color": function (m) {
-        console.log("[Server] Set background color to " + m.params.color + ".")
-    },
-    "say": function (m) {
-        console.log(m.params.text)
-    }
-}
-
-const myNewServer = new ws_server(3000, handlers);
-
-//Testing broadcasting messages. This has a 10 second delay from when you run ws_server
-setTimeout(() => {
-    myNewServer.broadcast_message("set-background-color", {color: "blue"})
-}, 10000);
+export default ws_server;
