@@ -1,5 +1,6 @@
 import Html5WebSocket from "html5-websocket";
 import ReconnectingWebSocket from "reconnecting-websocket";
+import { v4 as uuidv4 } from "uuid";
 
 class ws_client {
 
@@ -12,8 +13,10 @@ class ws_client {
         this.rws = new ReconnectingWebSocket("ws://" + ws_host + ":" + ws_port + "/ws", undefined, options);
         this.rws.timeout = 100;
         this.clientID = {
-            id: 
-        }
+            id: uuidv4(),
+            host: ws_host,
+            port: ws_port,
+        };
 
         // On connection opened
         this.rws.addEventListener("open", () => {

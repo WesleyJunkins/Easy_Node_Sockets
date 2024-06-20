@@ -24,6 +24,7 @@ class ws_server {
 
         // On client connected
         this.wss.on("connection", (ws) => {
+            ws.clientID;
             console.log("[Server] A client connected.");
 
             // On client connectioni closed
