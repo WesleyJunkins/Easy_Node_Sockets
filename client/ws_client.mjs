@@ -17,10 +17,22 @@ class ws_client {
             host: ws_host,
             port: ws_port,
         };
+        this.defaultHandlers = {
+            "server_accepted_connect": (m) => {
+                if (m.params.sendToUUID == this.clientID.id) {
+                    console.log("[Client] Connection to WebSocket Server was opened.");
+                    console.log("----------| Server Info |----------");
+                    console.log("uuid:", m.params.id);
+                    console.log("port:", m.params.port);
+                    console.log("current clients:", m.params.numClients)
+                    console.log("-----------------------------------");
+                };
+            }
+        };
 
         // On connection opened
         this.rws.addEventListener("open", () => {
-            console.log("[Client] Connection to WebSocket Server was opened.");
+            this.send_message("client_request_connect", this.clientID)
         });
 
         // On message received from server
@@ -62,9 +74,13 @@ class ws_client {
             if (this.handlers[method]) {
                 let handler = this.handlers[method];
                 handler(m);
-            } else {
-                console.log("[Client] No handler defined for method " + method + ".");
-            };
+            } else
+                if (this.defaultHandlers[method]) {
+                    let handler = this.defaultHandlers[method];
+                    handler(m);
+                } else {
+                    console.log("[Client] No handler defined for method " + method + ".");
+                };
         };
     };
 

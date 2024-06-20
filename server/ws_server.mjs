@@ -1,5 +1,6 @@
 import express from "express";
 import WebSocket, { WebSocketServer as SocketServer } from "ws";
+import { v4 as uuidv4 } from "uuid";
 
 // WebSocket Server Class
 // A class for handling the basic functionality of a websocket server. This includes 
@@ -15,6 +16,24 @@ class ws_server {
         this.start_server(handlers);
         this.broadcastable = false;
         this.clientList = [];
+        this.serverID = {
+            id: uuidv4(),
+            port: server_port,
+            numClients: 0
+        };
+        this.defaultHandlers = {
+            "client_request_connect":  (m) => {
+                this.clientList.push(m.params);
+                console.log("[Server] A client connected.");
+                console.log("----------| Client List |----------");
+                console.log(this.clientList);
+                console.log("-----------------------------------");
+
+                // Accept the connection
+                this.broadcast_message("server_accepted_connect", {id: this.serverID.id, port: this.serverID.port, numClients: this.serverID.numClients, sendToUUID: m.params.id});
+                this.serverID.numClients++;
+            }
+        };
     };
 
     // Server setup
@@ -24,10 +43,8 @@ class ws_server {
 
         // On client connected
         this.wss.on("connection", (ws) => {
-            ws.clientID;
-            console.log("[Server] A client connected.");
 
-            // On client connectioni closed
+            // On client connection closed
             ws.on("close", () => {
                 console.log("[Server] A client disconnected.");
             });
@@ -60,7 +77,7 @@ class ws_server {
     handle_message(m) {
         if (m.method == undefined) {
             return;
-        };      
+        };
 
         let method = m.method;
 
@@ -68,9 +85,13 @@ class ws_server {
             if (this.handlers[method]) {
                 let handler = this.handlers[method];
                 handler(m);
-            } else {
-                console.log("[Server] No handler defined for method " + method + ".");
-            };
+            } else
+                if (this.defaultHandlers[method]) {
+                    let handler = this.defaultHandlers[method];
+                    handler(m);
+                } else {
+                    console.log("[Server] No handler defined for method " + method + ".");
+                };
         };
     };
 
