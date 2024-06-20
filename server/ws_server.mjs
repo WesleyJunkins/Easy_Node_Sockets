@@ -14,6 +14,7 @@ class ws_server {
         console.log("[Server] Created a Web Socket server on port " + this.server_port + ".");
         this.start_server(handlers);
         this.broadcastable = false;
+        this.clientList = [];
     };
 
     // Server setup

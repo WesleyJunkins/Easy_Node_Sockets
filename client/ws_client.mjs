@@ -11,6 +11,9 @@ class ws_client {
         const options = { WebSocket: Html5WebSocket };
         this.rws = new ReconnectingWebSocket("ws://" + ws_host + ":" + ws_port + "/ws", undefined, options);
         this.rws.timeout = 100;
+        this.clientID = {
+            id: 
+        }
 
         // On connection opened
         this.rws.addEventListener("open", () => {
