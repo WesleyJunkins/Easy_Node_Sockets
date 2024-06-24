@@ -12,20 +12,29 @@ class ws_client {
         const options = { WebSocket: Html5WebSocket };
         this.rws = new ReconnectingWebSocket("ws://" + ws_host + ":" + ws_port + "/ws", undefined, options);
         this.rws.timeout = 100;
+        this.refreshID = uuidv4();
         this.clientID = {
             id: uuidv4(),
+            refreshID: this.refreshID,
             host: ws_host,
             port: ws_port,
         };
         this.defaultHandlers = {
             "server_accepted_connect": (m) => {
                 if (m.params.sendToUUID == this.clientID.id) {
+                    this.refreshID = m.params.firstRefreshID;
                     console.log("[Client] Connection to WebSocket Server was opened.");
                     console.log("----------| Server Info |----------");
                     console.log("uuid:", m.params.id);
                     console.log("port:", m.params.port);
-                    console.log("current clients:", m.params.numClients)
+                    console.lof("refreshID:", this.refreshID);
+                    console.log("current clients:", m.params.numClients);
                     console.log("-----------------------------------");
+                };
+            },
+            "server_probe": (m) => {
+                if(this.ws_port == m.params.port) {
+                    this.send_message("client_return_probe", {refreshID: m.params.refreshID, id: this.clientID.id, serverID: m.params.id})
                 };
             }
         };

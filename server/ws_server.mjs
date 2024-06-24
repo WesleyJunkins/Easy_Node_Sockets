@@ -14,6 +14,7 @@ class ws_server {
         this.wss = new SocketServer({ server });
         console.log("[Server] Created a Web Socket server on port " + this.server_port + ".");
         this.start_server(handlers);
+        this.refreshID = uuidv4();
         this.broadcastable = false;
         this.clientList = [];
         this.serverID = {
@@ -22,7 +23,7 @@ class ws_server {
             numClients: 0
         };
         this.defaultHandlers = {
-            "client_request_connect":  (m) => {
+            "client_request_connect": (m) => {
                 this.clientList.push(m.params);
                 console.log("[Server] A client connected.");
                 console.log("----------| Client List |----------");
@@ -30,8 +31,14 @@ class ws_server {
                 console.log("-----------------------------------");
 
                 // Accept the connection
-                this.broadcast_message("server_accepted_connect", {id: this.serverID.id, port: this.serverID.port, numClients: this.serverID.numClients, sendToUUID: m.params.id});
+                this.broadcast_message("server_accepted_connect", { id: this.serverID.id, port: this.serverID.port, numClients: this.serverID.numClients, sendToUUID: m.params.id, firstRefreshID: this.refreshID });
                 this.serverID.numClients++;
+            },
+            "client_return_probe": (m) => {
+                // UPDATE THE REFRESH IDs OF THE CLIENT WHO SENT THIS MESSAGE WITH THE REFRESH ID THEY JUST SENT
+                const updateClientIndex = this.clientList.findIndex(ele => ele.id == m.params.id);
+                // this.clientList[updateClientIndex].refreshID = this.refreshID;
+                console.log(this.clientList[updateClientIndex])
             }
         };
     };
@@ -40,6 +47,11 @@ class ws_server {
     // Setup the server to listen on the specified port and pass in the handlers object.
     start_server(handlers) {
         this.handlers = handlers;
+
+        // How often to probe clients to clean client list
+        setInterval(() => {
+            this.probe_clients();
+        }, 3000);
 
         // On client connected
         this.wss.on("connection", (ws) => {
@@ -122,6 +134,20 @@ class ws_server {
         } else {
             this.broadcastable = false
         };
+    };
+
+    // Probe active clients
+    // Sends a request to all clients. If a client does not respond, it is removed from the server's client list.
+    // GO THROUGH THE CLIENT LIST AND REMOVE ALL CLIENTS WHOSE REFRESHID DOES NOT MATCH THE OLDREFRESHID.
+    probe_clients() {
+        for(let i = 0; i < this.clientList.length; i++) {
+            if(this.clientList[i].refreshID != this.refreshID) {
+                this.clientList.splice(i, 1);
+                this.numClients--;
+            };
+        }
+        this.refreshID = uuidv4();
+        this.broadcast_message("server_probe", { refreshID: this.refreshID, id: this.serverID.id, port: this.serverID.port });
     };
 };
 
