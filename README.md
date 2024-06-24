@@ -27,6 +27,10 @@ node exampleClient.js
 
 in the directory or machine that contains the client application.
 
+---
+---
+---
+
 # Example Code Explanation
 ## Server
 
@@ -132,36 +136,83 @@ setInterval(function () {
 
 Both the exampleServer and exampleClient files can be used as boilerplate templates for building more complex client/server applications over websockets.
 
-#Methods
+---
+---
+---
 
+# Methods
 
+The following methods are available from the class files.
 
+## Server Methods
 
+```
+ws_server(server_port, handlers)
+```
 
+Default constructor
+int server_port: the port number the server will send and receive messages from.
+object handlers: the handler object that contains the code to be run when the server receives a message.
 
+---
 
+```
+broadcast_message(method, parameters)
+```
+Broadcast a message to all clients currently connected.
+string method: the name of the method you would like to invoke from the client. This method name must be specified in each client's handler object (either default or custom).
+object parameters: the object containing all required parameters and their values. These parameters must be specified in each client's handler object (either default or custom).
 
+---
 
+```
+set_broadcastable(broadcast)
+```
+Toggle if the server is broadcastable or not. If the server is broadcastable, then any message sent from one client will automatically be broadcast to all other clients connected to the server. This is useful for client-to-client communication.
+bool broadcast: set to TRUE to make the server broadcastable. Set to FALSE to turn broadcastability off.
 
+---
 
+## Client Methods
 
+```
+ws_client(ws_host, ws_port, handlers)
+```
 
+Default constructor
+string ws_host: the hostname of the server to which you would like this client to connect.
+int ws_port: the port number of the server to which you would like this client to connect.
+object handlers: the handler object that contains the code to be run when the server receives a message.
 
+---
 
+```
+send_message(method, parameters)
+```
+Send a message to the server.
+string method: the name of the method you would like to invoke from the server. This method name must be specified in the server's handler object (either default or custom).
+object parameters: the object containing all required parameters and their values. These parameters must be specified in the server's handler object (either default or custom).
 
+---
+---
+---
 
+# Default Handlers
 
+The Server and Client classes come with a default handlers object. The methods in these object do not have to be programmed by the user. They must only be called. 
+The following list includes the default handlers of the Server, Client, and Both.
 
+## Server and Client
 
+Insert here later...
 
+## Server Only
 
+Insert here later...
 
+## Client Only
 
-
-
-
-
-
+Insert here later...
 
 
 
