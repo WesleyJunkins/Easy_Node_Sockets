@@ -171,7 +171,9 @@ class ws_server {
     probe_clients = () => {
         let somethingWasRemoved = false;
         for (let i = 0; i < this.clientList.length; i++) {
-            if (this.clientList[i].refreshID != this.refreshID) {
+            if (this.clientList[i].refreshID != this.refreshID)  {
+                this.clientList[i].warningNumber++;
+                console.log("Warning number: ", this.clientList[i].warningNumber)
                 console.log("Client ID:", this.clientList[i].id, "has refresh ID:", this.clientList[i].refreshID, "which does not match current refresh ID: ", this.refreshID)
                 this.clientList.splice(i, 1);
                 this.serverID.numClients--;
