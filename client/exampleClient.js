@@ -17,6 +17,7 @@ let handlers = {
 //         Include the value of the host, port, and the handlers object you just created.
 //         Beyond this, the client is running.
 const myNewClient = new ws_client("localhost", 3000, handlers)
+myNewClient.set_list_mode(true);
 
 // Step 3: write code to interact with a server.
 setInterval(function () {

@@ -9,6 +9,8 @@ class ws_client {
         this.ws_host = ws_host;
         this.ws_port = ws_port;
         this.handlers = handlers;
+        this.debugMode = false;
+        this.listMode = false;
         const options = { WebSocket: Html5WebSocket };
         this.rws = new ReconnectingWebSocket("ws://" + ws_host + ":" + ws_port + "/ws", undefined, options);
         this.rws.timeout = 100;
@@ -23,13 +25,20 @@ class ws_client {
             "server_accepted_connect": (m) => {
                 if (m.params.sendToUUID == this.clientID.id) {
                     this.refreshID = m.params.firstRefreshID;
-                    console.log("[Client] Connection to WebSocket Server was opened.");
-                    console.log("----------| Server Info |----------");
-                    console.log("uuid:", m.params.id);
-                    console.log("port:", m.params.port);
-                    console.lof("refreshID:", this.refreshID);
-                    console.log("current clients:", m.params.numClients);
-                    console.log("-----------------------------------");
+                    if(this.debugMode == true) {
+                        console.log("[Client] Connection to WebSocket Server was opened.");
+                    };
+                    if(this.listMode == true) {
+                        console.log("-----------------------------------");
+                        console.log("----------| Server Info |----------");
+                        console.log("id:", m.params.id);
+                        console.log("refreshID:", m.params.firstRefreshID);
+                        console.log("port:", m.params.port);
+                        console.log("current clients:", m.params.numClients);
+                        console.log("-----------------------------------");
+                        console.log("-----------------------------------");
+                    };
+                    this.send_message("client_return_probe", {refreshID: m.params.firstRefreshID, id: this.clientID.id, serverID: m.params.id})
                 };
             },
             "server_probe": (m) => {
@@ -51,28 +60,34 @@ class ws_client {
                 let m = JSON.parse(e.data);
                 this.handle_message(m);
             } catch (err) {
-                console.log("[Client] Message is not parseable to JSON.");
+                if(this.debugMode == true) {
+                    console.log("[Client] Message is not parseable to JSON.");
+                };
             };
         });
 
         // On server connection closed
         // Try to reconnect based on the timeout settings.
         this.rws.addEventListener("close", () => {
-            console.log("[Client] Connection closed. Reconnecting...");
+            if(this.debugMode == true) {
+                console.log("[Client] Connection closed. Reconnecting...");
+            };
         });
 
         // On server connection down (not temporary)
         // Alert that the server is down completely. No reconnecting.
         this.rws.onerror = (err) => {
             if (err.code == "EHOSTDOWN") {
-                console.log("[Client] ERROR: Server is down.");
+                if(this.debugMode == true) {
+                    console.log("[Client] ERROR: Server is down.");
+                };
             };
         };
     };
 
     // Handle incoming messages
     // Extract the METHOD element from the JSON object message. If method is defined and exists in the HANDLERS object, then run the defined function from HANDLERS. Otherwise, alert that the method is either undefined or is not in the HANDLERS object.
-    handle_message(m) {
+    handle_message = (m) => {
         if (m.method == undefined) {
             return;
         };
@@ -88,22 +103,40 @@ class ws_client {
                     let handler = this.defaultHandlers[method];
                     handler(m);
                 } else {
-                    console.log("[Client] No handler defined for method " + method + ".");
+                    if(this.debugMode == true) {
+                        console.log("[Client] No handler defined for method " + method + ".");
+                    };
                 };
         };
     };
 
     // Send JSON object to server
     // Given the desired method and parameters, package into a JSON object, stringify it, and send it to the server. 
-    send_message(method, parameters) {
+    send_message = (method, parameters) => {
         let newMessage = JSON.stringify({
             method: method,
             params: parameters
         });
 
         this.rws.send(newMessage);
-        console.log("[Client] Message sent to server: \n\t", newMessage);
+        if(this.debugMode == true) {
+            console.log("[Client] Message sent to server: \n\t", newMessage);
+        };
     };
+
+    // Determines if client operates in debug mode
+    // If TRUE => client messages will print to the client console.
+    // If FALSE => client messages will not print to the console. The console will be blank unless manipulated by the user.
+    set_debug_mode = (debugMode) => {
+        this.debugMode = debugMode;
+    };
+
+    // Determines if client operates in list mode
+    // If TRUE => client's server connection will be printed upon client connected.
+    // If FALSE => client's server connection will never be printed.
+    set_list_mode = (listMode) => {
+        this.listMode = listMode
+    }
 };
 
 export default ws_client;
