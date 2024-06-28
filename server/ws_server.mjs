@@ -15,7 +15,9 @@ class ws_server {
         this.broadcastable = false;
         this.debugMode = false;
         this.listMode = false;
-        if(this.debugMode === true) {
+        this.probeMode = false;
+        this.probeInterval = 10000;
+        if (this.debugMode === true) {
             console.log("[Server] Created a Web Socket server on port " + this.server_port + ".");
         };
         this.start_server(handlers);
@@ -29,10 +31,10 @@ class ws_server {
         this.defaultHandlers = {
             "client_request_connect": (m) => {
                 this.clientList.push(m.params);
-                if(this.debugMode === true) {
+                if (this.debugMode === true) {
                     console.log("[Server] A client connected.");
                 };
-                if(this.listMode === true) {
+                if (this.listMode === true) {
                     console.log("-----------------------------------");
                     console.log("----------| Client List |----------");
                     console.log(this.clientList);
@@ -60,13 +62,15 @@ class ws_server {
         this.wss.on("connection", (ws) => {
 
             // How often to probe clients to clean client list
-            setInterval(() => {
-                this.probe_clients();
-            }, 6200);
+            if (this.probeMode === true) {
+                setInterval(() => {
+                    this.probe_clients();
+                }, this.probeInterval);
+            };
 
             // On client connection closed
             ws.on("close", () => {
-                if(this.debugMode === true) {
+                if (this.debugMode === true) {
                     console.log("[Server] A client disconnected.");
                 };
             });
@@ -79,7 +83,7 @@ class ws_server {
                     let m = JSON.parse(message);
                     this.handle_message(m);
                 } catch (err) {
-                    if(this.debugMode === true) {
+                    if (this.debugMode === true) {
                         console.log(err);
                         console.log("[Server] Message is not parseable to JSON.");
                     };
@@ -114,7 +118,7 @@ class ws_server {
                     let handler = this.defaultHandlers[method];
                     handler(m);
                 } else {
-                    if(this.debugMode === true) {
+                    if (this.debugMode === true) {
                         console.log("[Server] No handler defined for method " + method + ".");
                     };
                 };
@@ -132,11 +136,11 @@ class ws_server {
         this.wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(newMessage);
-                if(this.debugMode === true) {
+                if (this.debugMode === true) {
                     console.log("[Server] Message broadcast to clients: \n\t", newMessage);
                 };
             } else {
-                if(this.debugMode === true) {
+                if (this.debugMode === true) {
                     console.log("[Server] Client did not receive message broadcast. Client readyState = CLOSED.");
                 };
             };
@@ -158,11 +162,23 @@ class ws_server {
     };
 
     // Determines if server operates in list mode
-    // If TRUE => server's client list will be printed upon client connected.
+    // If TRUE => server's client list will be printed upon client connected and disconnected.
     // If FALSE => server's client list will never be printed.
     set_list_mode = (listMode) => {
-        this.listMode = listMode
-    }
+        this.listMode = listMode;
+    };
+
+    // Determines if server operates in probe mode
+    // If TRUE => server will probe all clients with a refreshID. Any client who fails to return an accurate refreshID after 3 tries will be removed from the server's client list.
+    // If FALSE => server will not probe clients.
+    // Set probeInterval to the interval you want the server to probe clients (in milliseconds). By default, it is set to 10000 ms. HINT: setting this value too low may cause issues with maintaining connections.
+    // Probing has some issues for now, so it is turned off by default.
+    set_probe_mode(probeMode, probeInterval) {
+        this.probeMode = probeMode;
+        if (probeMode === true) {
+            this.probeInterval = probeInterval;
+        };
+    };
 
     // Probe active clients
     // Sends a request to all clients. If a client does not respond, it is removed from the server's client list.
@@ -171,9 +187,8 @@ class ws_server {
     probe_clients = () => {
         let somethingWasRemoved = false;
         for (let i = 0; i < this.clientList.length; i++) {
-            if (this.clientList[i].refreshID != this.refreshID)  {
+            if (this.clientList[i].refreshID != this.refreshID) {
                 this.clientList[i].warningNumber++;
-                console.log("Warning number: ", this.clientList[i].warningNumber)
                 console.log("Client ID:", this.clientList[i].id, "has refresh ID:", this.clientList[i].refreshID, "which does not match current refresh ID: ", this.refreshID)
                 this.clientList.splice(i, 1);
                 this.serverID.numClients--;
@@ -182,9 +197,8 @@ class ws_server {
         }
         this.refreshID = uuidv4();
         this.broadcast_message("server_probe", { refreshID: this.refreshID, id: this.serverID.id, port: this.serverID.port });
-        if(somethingWasRemoved === true) {
-            if(this.listMode === true) {
-                console.log("SOMETHING REMOVED")
+        if (somethingWasRemoved === true) {
+            if (this.listMode === true) {
                 console.log("-----------------------------------");
                 console.log("----------| Client List |----------");
                 console.log(this.clientList);

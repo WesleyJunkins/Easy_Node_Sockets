@@ -20,7 +20,6 @@ class ws_client {
             refreshID: this.refreshID,
             host: ws_host,
             port: ws_port,
-            warningNumber: 0
         };
         this.defaultHandlers = {
             "server_accepted_connect": (m) => {
