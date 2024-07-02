@@ -16,7 +16,7 @@ let handlers = {
 // Step 2: create a new server.
 //         Include the value of the port on which you want to listen, as well as the handlers object you just created.
 //         Beyond this, the server is running.
-const myNewServer = new ws_server(443, handlers);
+const myNewServer = new ws_server(3000, handlers);
 myNewServer.set_list_mode(true);
 myNewServer.set_broadcastable(true);
 
