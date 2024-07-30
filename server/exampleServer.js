@@ -17,7 +17,9 @@ let handlers = {
 //         Include the value of the port on which you want to listen, as well as the handlers object you just created.
 //         Beyond this, the server is running.
 const myNewServer = new ws_server(3000, handlers);
+myNewServer.set_debug_mode(true);
 myNewServer.set_list_mode(true);
+myNewServer.set_probe_mode(true, 7000);
 myNewServer.set_broadcastable(true);
 
 // Step 3: write code to interact with client(s).

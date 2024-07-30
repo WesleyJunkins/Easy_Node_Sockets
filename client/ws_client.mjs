@@ -13,7 +13,7 @@ class ws_client {
         this.listMode = false;
         const options = { WebSocket: Html5WebSocket };
         this.rws = new ReconnectingWebSocket("ws://" + ws_host + ":" + ws_port + "/ws", undefined, options);
-        this.rws.timeout = 100;
+        this.rws.timeout = 1000;
         this.refreshID = uuidv4();
         this.clientID = {
             id: uuidv4(),
@@ -25,10 +25,10 @@ class ws_client {
             "server_accepted_connect": (m) => {
                 if (m.params.sendToUUID == this.clientID.id) {
                     this.refreshID = m.params.firstRefreshID;
-                    if(this.debugMode == true) {
+                    if (this.debugMode == true) {
                         console.log("[Client] Connection to WebSocket Server was opened.");
                     };
-                    if(this.listMode == true) {
+                    if (this.listMode == true) {
                         console.log("-----------------------------------");
                         console.log("----------| Server Info |----------");
                         console.log("id:", m.params.id);
@@ -38,13 +38,16 @@ class ws_client {
                         console.log("-----------------------------------");
                         console.log("-----------------------------------");
                     };
-                    this.send_message("client_return_probe", {refreshID: m.params.firstRefreshID, id: this.clientID.id, serverID: m.params.id})
+                    this.send_message("client_return_probe", { refreshID: m.params.firstRefreshID, id: this.clientID.id, serverID: m.params.id })
                 };
             },
             "server_probe": (m) => {
-                if(this.ws_port == m.params.port) {
-                    this.send_message("client_return_probe", {refreshID: m.params.refreshID, id: this.clientID.id, serverID: m.params.id})
+                if (this.ws_port == m.params.port) {
+                    this.send_message("client_return_probe", { refreshID: m.params.refreshID, id: this.clientID.id, serverID: m.params.id })
                 };
+            },
+            "client_request_connect": (m) => {
+
             }
         };
 
@@ -60,7 +63,7 @@ class ws_client {
                 let m = JSON.parse(e.data);
                 this.handle_message(m);
             } catch (err) {
-                if(this.debugMode == true) {
+                if (this.debugMode == true) {
                     console.log("[Client] Message is not parseable to JSON.");
                 };
             };
@@ -69,7 +72,7 @@ class ws_client {
         // On server connection closed
         // Try to reconnect based on the timeout settings.
         this.rws.addEventListener("close", () => {
-            if(this.debugMode == true) {
+            if (this.debugMode == true) {
                 console.log("[Client] Connection closed. Reconnecting...");
             };
         });
@@ -78,7 +81,7 @@ class ws_client {
         // Alert that the server is down completely. No reconnecting.
         this.rws.onerror = (err) => {
             if (err.code == "EHOSTDOWN") {
-                if(this.debugMode == true) {
+                if (this.debugMode == true) {
                     console.log("[Client] ERROR: Server is down.");
                 };
             };
@@ -103,7 +106,7 @@ class ws_client {
                     let handler = this.defaultHandlers[method];
                     handler(m);
                 } else {
-                    if(this.debugMode == true) {
+                    if (this.debugMode == true) {
                         console.log("[Client] No handler defined for method " + method + ".");
                     };
                 };
@@ -119,7 +122,7 @@ class ws_client {
         });
 
         this.rws.send(newMessage);
-        if(this.debugMode == true) {
+        if (this.debugMode == true) {
             console.log("[Client] Message sent to server: \n\t", newMessage);
         };
     };

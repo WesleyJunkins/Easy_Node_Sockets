@@ -17,9 +17,7 @@ class ws_server {
         this.listMode = false;
         this.probeMode = false;
         this.probeInterval = 10000;
-        if (this.debugMode === true) {
-            console.log("[Server] Created a Web Socket server on port " + this.server_port + ".");
-        };
+        console.log("[Server] Created a WebSocket server on port " + this.server_port + ".");
         this.start_server(handlers);
         this.refreshID = uuidv4();
         this.clientList = [];
@@ -49,6 +47,9 @@ class ws_server {
             "client_return_probe": (m) => {
                 const updateClientIndex = this.clientList.findIndex(ele => ele.id == String((m.params.id).trim()));
                 this.clientList[updateClientIndex].refreshID = this.refreshID;
+            },
+            "server_probe": (m) => {
+
             }
         };
     };
@@ -70,9 +71,7 @@ class ws_server {
 
             // On client connection closed
             ws.on("close", () => {
-                if (this.debugMode === true) {
-                    console.log("[Server] A client disconnected.");
-                };
+                this.probe_clients();
             });
 
             // On message received from client
@@ -189,7 +188,9 @@ class ws_server {
         for (let i = 0; i < this.clientList.length; i++) {
             if (this.clientList[i].refreshID != this.refreshID) {
                 this.clientList[i].warningNumber++;
-                console.log("Client ID:", this.clientList[i].id, "has refresh ID:", this.clientList[i].refreshID, "which does not match current refresh ID: ", this.refreshID)
+                if (this.debugMode === true) {
+                    console.log("[Server] Client disconnected (ID: " + this.clientList[i].id + ").")
+                }
                 this.clientList.splice(i, 1);
                 this.serverID.numClients--;
                 somethingWasRemoved = true;
